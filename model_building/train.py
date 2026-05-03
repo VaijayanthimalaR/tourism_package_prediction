@@ -16,7 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
-from huggingface_hub import HfApi, create_repo
+from huggingface_hub import HfApi, create_repo, hf_hub_download
 from huggingface_hub.utils import RepositoryNotFoundError
 
 
@@ -27,16 +27,25 @@ mlflow.set_experiment("tourism-mlops-experiment")
 
 # AUTH
 
-HF_TOKEN = "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"
+HF_TOKEN = "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"
 api = HfApi(token=HF_TOKEN)
 
 
 # LOAD DATA
 
-Xtrain = pd.read_csv("hf://datasets/vaijayanthimala07/tourism-package-prediction/processed/v1/Xtrain.csv")
-Xtest  = pd.read_csv("hf://datasets/vaijayanthimala07/tourism-package-prediction/processed/v1/Xtest.csv")
-ytrain = pd.read_csv("hf://datasets/vaijayanthimala07/tourism-package-prediction/processed/v1/ytrain.csv")
-ytest  = pd.read_csv("hf://datasets/vaijayanthimala07/tourism-package-prediction/processed/v1/ytest.csv")
+# Define base repo ID
+HF_DATASET_REPO_ID = "vaijayanthimala07/tourism-package-predict"
+
+# Download files locally first for robust loading
+Xtrain_path = hf_hub_download(repo_id=HF_DATASET_REPO_ID, filename="Xtrain.csv", repo_type="dataset")
+Xtest_path  = hf_hub_download(repo_id=HF_DATASET_REPO_ID, filename="Xtest.csv", repo_type="dataset")
+ytrain_path = hf_hub_download(repo_id=HF_DATASET_REPO_ID, filename="ytrain.csv", repo_type="dataset")
+ytest_path  = hf_hub_download(repo_id=HF_DATASET_REPO_ID, filename="ytest.csv", repo_type="dataset")
+
+Xtrain = pd.read_csv(Xtrain_path)
+Xtest  = pd.read_csv(Xtest_path)
+ytrain = pd.read_csv(ytrain_path)
+ytest  = pd.read_csv(ytest_path)
 
 # Fix shape
 ytrain = ytrain.values.ravel()
@@ -59,6 +68,18 @@ categorical_features = [
     'ProductPitched','MaritalStatus','Designation'
 ]
 
+# Convert integer columns to float64 to prevent MLflow schema warnings related to missing values
+int_cols_to_float = [
+    'Age', 'CityTier', 'NumberOfPersonVisiting', 'Passport',
+    'PitchSatisfactionScore', 'OwnCar', 'NumberOfChildrenVisiting'
+]
+
+for col in int_cols_to_float:
+    if col in Xtrain.columns:
+        Xtrain[col] = Xtrain[col].astype('float64')
+    if col in Xtest.columns:
+        Xtest[col] = Xtest[col].astype('float64')
+
 
 # CLASS WEIGHT (SAFE)
 
@@ -76,7 +97,6 @@ preprocessor = make_column_transformer(
 model = xgb.XGBClassifier(
     scale_pos_weight=class_weight,
     random_state=42,
-    use_label_encoder=False,
     eval_metric='logloss'
 )
 
@@ -141,15 +161,15 @@ with mlflow.start_run(run_name="xgboost_v1"):
     joblib.dump(best_model, model_path)
 
     # Log model
-    mlflow.log_artifact(model_path, artifact_path="model")
-    mlflow.sklearn.log_model(best_model, "model")
+    mlflow.log_artifact(model_path, "model")
+    mlflow.sklearn.log_model(best_model, name="model", input_example=Xtrain.head())
 
     print(f" Model saved: {model_path}")
 
 
 # UPLOAD TO HUGGING FACE
 
-repo_id = "vaijayanthimala07/tourism_package_prediction_model"
+repo_id = "vaijayanthimala07/tourism_package_predict_model"
 
 try:
     api.repo_info(repo_id=repo_id, repo_type="model")

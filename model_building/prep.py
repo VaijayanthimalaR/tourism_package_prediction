@@ -10,13 +10,13 @@ from sklearn.preprocessing import LabelEncoder
 from huggingface_hub import HfApi
 
 
-HF_TOKEN = "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"
+HF_TOKEN = "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"
 api = HfApi(token=HF_TOKEN)
 
 
 # LOAD DATA
 
-DATASET_PATH = "hf://datasets/vaijayanthimala07/tourism-package-prediction/tourism.csv"
+DATASET_PATH = "hf://datasets/vaijayanthimala07/tourism-package-predict/tourism.csv"
 
 df = pd.read_csv(DATASET_PATH)
 print("Dataset loaded successfully.")
@@ -45,10 +45,10 @@ df['Gender'] = df['Gender'].apply(clean_gender)
 
 # Handle missing values
 for col in df.select_dtypes(include='object'):
-    df[col].fillna(df[col].mode()[0], inplace=True)
+    df[col] = df[col].fillna(df[col].mode()[0])
 
 for col in df.select_dtypes(include='number'):
-    df[col].fillna(df[col].median(), inplace=True)
+    df[col] = df[col].fillna(df[col].median())
 
 print(" Data cleaning completed.")
 
@@ -99,7 +99,7 @@ print("Files saved locally.")
 
 # UPLOAD TO HUGGING FACE
 
-repo_id = "vaijayanthimala07/tourism-package-prediction"
+repo_id = "vaijayanthimala07/tourism-package-predict"
 
 files = [
     "Xtrain.csv","Xtest.csv",
@@ -108,19 +108,12 @@ files = [
 ]
 
 for file_path in files:
-    repo_files = api.list_repo_files(repo_id=repo_id, repo_type="dataset")
-    repo_path = f"processed/v1/{file_path}"
-
-    if repo_path in repo_files:
-        print(f" {file_path} already exists, skipping upload")
-        continue
-
     api.upload_file(
         path_or_fileobj=file_path,
-        path_in_repo=repo_path,
-        repo_id=repo_id,
-        repo_type="dataset",
-        commit_message=f"Added {file_path}"
-    )
+        path_in_repo=file_path.split("/")[-1],  # just the filename
 
+        repo_id="vaijayanthimala07/tourism-package-predict",
+
+        repo_type="dataset",
+    )
 print(" Upload completed successfully.")
