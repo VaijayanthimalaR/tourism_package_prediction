@@ -60,4 +60,3 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: <add_code_here>
 
-```
