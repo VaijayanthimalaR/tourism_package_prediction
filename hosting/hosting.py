@@ -1,7 +1,7 @@
 from huggingface_hub import HfApi
 import os
 
-os.environ["HF_TOKEN"] = "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"
+# Initialize API client
 api = HfApi(token=os.getenv("HF_TOKEN"))
 api.upload_folder(
     folder_path="tourism_project/deployment",     # the local folder containing your files

@@ -2,11 +2,8 @@ from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 from huggingface_hub import HfApi, create_repo
 import os
 
-os.environ["HF_TOKEN"] = "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" 
 
-api = HfApi(token=os.getenv("HF_TOKEN"))
-
-repo_id = "vaijayanthimala07/tourism-package-predict"   
+repo_id = "vaijayanthimala07/tourism-package-predict"
 
 repo_type = "dataset"
 

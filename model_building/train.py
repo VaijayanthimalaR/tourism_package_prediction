@@ -27,8 +27,8 @@ mlflow.set_experiment("tourism-mlops-experiment")
 
 # AUTH
 
-HF_TOKEN = "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"
-api = HfApi(token=HF_TOKEN)
+# Initialize API client
+api = HfApi(token=os.getenv("HF_TOKEN"))
 
 
 # LOAD DATA

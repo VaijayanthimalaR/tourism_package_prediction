@@ -7,18 +7,24 @@ import os
 import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, hf_hub_download
 
 
-HF_TOKEN = "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"
-api = HfApi(token=HF_TOKEN)
+api = HfApi(token=os.getenv("HF_TOKEN"))
 
 
 # LOAD DATA
 
-DATASET_PATH = "hf://datasets/vaijayanthimala07/tourism-package-predict/tourism.csv"
+HF_DATASET_REPO_ID = "vaijayanthimala07/tourism-package-predict"
+DATASET_FILENAME = "tourism.csv"
 
-df = pd.read_csv(DATASET_PATH)
+dataset_path_local = hf_hub_download(
+    repo_id=HF_DATASET_REPO_ID,
+    filename=DATASET_FILENAME,
+    repo_type="dataset"
+)
+
+df = pd.read_csv(dataset_path_local)
 print("Dataset loaded successfully.")
 
 
