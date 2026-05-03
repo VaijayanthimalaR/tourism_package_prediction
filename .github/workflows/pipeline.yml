@@ -1,59 +1,66 @@
-
 name: Tourism Project Pipeline
 
 on:
   push:
     branches:
-      - main  # Automatically triggers on push to the main branch
+      - main
 
 jobs:
 
-register-dataset:
+  register-dataset:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install Dependencies
-        run: pip install -r tourism_package_prediction/requirements.txt
+        run: pip install -r requirements.txt
+
       - name: Upload Dataset to Hugging Face Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python tourism_package_prediction/model_building/data_register.py
+        run: python model_building/data_register.py
+
 
   data-prep:
     needs: register-dataset
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install Dependencies
-        run: pip install -r tourism_package_prediction/requirements.txt
+        run: pip install -r requirements.txt
+
       - name: Run Data Preparation
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python tourism_package_prediction/model_building/prep.py
+        run: python model_building/prep.py
 
 
-  model-traning:
+  model-training:
     needs: data-prep
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install Dependencies
-        run: pip install -r tourism_package_prediction/requirements.txt
-      - name: Model Building
+        run: pip install -r requirements.txt
+
+      - name: Model Training
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python tourism_package_prediction/model_building/train.py
+        run: python model_building/train.py
 
 
   deploy-hosting:
+    needs: model-training
     runs-on: ubuntu-latest
-    needs: [model-traning,data-prep,register-dataset]
     steps:
       - uses: actions/checkout@v3
+
       - name: Install Dependencies
-        run: pip install -r tourism_package_prediction/requirements.txt
-      - name: Push files to Frontend Hugging Face Space
+        run: pip install huggingface_hub
+
+      - name: Deploy to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python tourism_package_prediction/hosting/hosting.py
-  
