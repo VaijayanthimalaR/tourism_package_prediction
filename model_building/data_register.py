@@ -1,5 +1,7 @@
 from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 from huggingface_hub import HfApi, create_repo
+from pathlib import Path
+from huggingface_hub import upload_folder
 import os
 
 
@@ -19,8 +21,15 @@ except RepositoryNotFoundError:
     create_repo(repo_id=repo_id, repo_type=repo_type, private=False)
     print(f"Space '{repo_id}' created.")
 
+    # Use relative paths from the repo root
+data_dir = Path(__file__).parent.parent / "data"  # Adjust based on actual structure
+
+if not data_dir.exists():
+    raise FileNotFoundError(f"Data directory not found at {data_dir}")
+
 api.upload_folder(
-    folder_path="tourism_package_prediction/data",
+    folder_path=str(data_dir),
     repo_id=repo_id,
     repo_type=repo_type,
+    token=os.environ.get("HF_TOKEN")
 )
